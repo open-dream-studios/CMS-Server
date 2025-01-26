@@ -18,9 +18,9 @@ const PORT = process.env.PORT || 3001;
 // });
 
 app.use(cors({
-  origin: "http://localhost:3000", // Allow your local front-end
-  methods: ["POST", "GET", "OPTIONS"], // Allow required methods
-  allowedHeaders: ["Content-Type"], // Allow required headers
+  origin: ["http://localhost:3000", "https://jessshulmanportfolio.com"],
+  methods: ["POST", "GET", "OPTIONS"], 
+  allowedHeaders: ["Content-Type"], 
 }));
 app.options("*", cors());
 
