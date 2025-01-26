@@ -10,12 +10,19 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
-  res.header("Access-Control-Allow-Methods", "POST");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
-  next();
-});
+// app.use((req, res, next) => {
+//   res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+//   res.header("Access-Control-Allow-Methods", "POST");
+//   res.header("Access-Control-Allow-Headers", "Content-Type");
+//   next();
+// });
+
+app.use(cors({
+  origin: "http://localhost:3000", // Allow your local front-end
+  methods: ["POST", "GET", "OPTIONS"], // Allow required methods
+  allowedHeaders: ["Content-Type"], // Allow required headers
+}));
+app.options("*", cors());
 
 const upload = multer({ dest: "uploads/" });
 
