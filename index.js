@@ -6,22 +6,18 @@ const path = require("path");
 const cors = require("cors");
 const fetch = require("node-fetch");
 require("dotenv").config();
+const sharp = require("sharp");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// app.use((req, res, next) => {
-//   res.header("Access-Control-Allow-Origin", "http://localhost:3000");
-//   res.header("Access-Control-Allow-Methods", "POST");
-//   res.header("Access-Control-Allow-Headers", "Content-Type");
-//   next();
-// });
-
-app.use(cors({
-  origin: ["http://localhost:3000", "https://jessshulmanportfolio.com"],
-  methods: ["POST", "GET", "OPTIONS"], 
-  allowedHeaders: ["Content-Type"], 
-}));
+app.use(
+  cors({
+    origin: ["http://localhost:3000", "https://jessshulmanportfolio.com"],
+    methods: ["POST", "GET", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 app.options("*", cors());
 
 const upload = multer({ dest: "uploads/" });
@@ -69,26 +65,38 @@ app.post("/compress", upload.array("files"), async (req, res) => {
     for (const file of files) {
       const imagePool = new ImagePool(1); // Use a single-threaded ImagePool for safety
       try {
+        // const fileBuffer = fs.readFileSync(file.path);
+        // const image = imagePool.ingestImage(fileBuffer);
+
+        // await image.preprocess({
+        //   resize: { width: 1220 },
+        //   rotate: true,
+        // });
+
         const fileBuffer = fs.readFileSync(file.path);
-        const image = imagePool.ingestImage(fileBuffer);
-
-        await image.preprocess({
-          resize: {
-            width: 1220,
-          },
-        });
-
-        await image.encode({
-          webp: { lossless: true },
-        });
-
-        const { binary } = await image.encodedWith.webp;
+        const processedBuffer = await sharp(fileBuffer)
+          .rotate() // Correct orientation based on EXIF metadata
+          .resize(1220)
+          .webp({ lossless: true })
+          .toBuffer();
 
         await uploadToGitHub({
           name: file.originalname,
-          src: binary,
+          src: processedBuffer,
           currentPath: currentPath,
         });
+
+        // await image.encode({
+        //   webp: { lossless: true },
+        // });
+
+        // const { binary } = await image.encodedWith.webp;
+
+        // await uploadToGitHub({
+        //   name: file.originalname,
+        //   src: binary,
+        //   currentPath: currentPath,
+        // });
 
         fs.unlinkSync(file.path);
       } catch (err) {
