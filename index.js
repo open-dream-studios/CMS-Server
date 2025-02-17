@@ -29,10 +29,16 @@ const upload = multer({ dest: "uploads/" });
 app.post("/compress", upload.array("files"), async (req, res) => {
   const uploadToGitHub = async (image) => {
     const token = process.env.GIT_PAT;
-    const owner = req.body.branch
-    const repo = req.body.repo
-    const branch = req.body.owner
-    console.log(owner, repo, branch)
+    const owner = "open-dream-studios";
+    const repo = "test-project";
+    const branch = "main";
+
+    const owner2 = req.body.branch;
+    const repo2 = req.body.repo;
+    const branch2 = req.body.owner;
+    
+    console.log(owner, repo, branch);
+    console.log(owner2, repo2, branch2);
 
     try {
       if (!image.src || !(image.src instanceof Uint8Array)) {
