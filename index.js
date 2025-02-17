@@ -13,7 +13,11 @@ const PORT = process.env.PORT || 3001;
 
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:3001", "https://jessshulmanportfolio.com"],
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "https://jessshulmanportfolio.com",
+    ],
     methods: ["POST", "GET", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
   })
@@ -22,44 +26,46 @@ app.options("*", cors());
 
 const upload = multer({ dest: "uploads/" });
 
-const uploadToGitHub = async (image, branch, repo, owner) => {
-  const token = process.env.GIT_PAT;
-
-  try {
-    if (!image.src || !(image.src instanceof Uint8Array)) {
-      throw new Error("Invalid image source");
-    }
-
-    const response = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/images/${image.name}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: `Add ${image.name}`,
-          content: Buffer.from(image.src).toString("base64"),
-          branch: branch,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to upload ${image.name}: ${response.statusText}`);
-    }
-  } catch (error) {
-    console.error("Error uploading to GitHub:", error);
-  }
-};
-
 app.post("/compress", upload.array("files"), async (req, res) => {
   try {
     const files = req.files;
-    const gitBranch = req.body.gitBranch
-    const gitRepo = req.body.getRepo
-    const gitOwner = req.body.gitOwner
+    const branch = req.body.gitBranch;
+    const repo = req.body.getRepo;
+    const owner = req.body.gitOwner;
+
+    const uploadToGitHub = async (image) => {
+      const token = process.env.GIT_PAT;
+
+      try {
+        if (!image.src || !(image.src instanceof Uint8Array)) {
+          throw new Error("Invalid image source");
+        }
+
+        const response = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/contents/images/${image.name}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              message: `Add ${image.name}`,
+              content: Buffer.from(image.src).toString("base64"),
+              branch: branch,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to upload ${image.name}: ${response.statusText}`
+          );
+        }
+      } catch (error) {
+        console.error("Error uploading to GitHub:", error);
+      }
+    };
 
     for (const file of files) {
       const imagePool = new ImagePool(1); // Use a single-threaded ImagePool for safety
@@ -82,9 +88,6 @@ app.post("/compress", upload.array("files"), async (req, res) => {
         await uploadToGitHub({
           name: file.originalname,
           src: processedBuffer,
-          gitBranch, 
-          gitRepo,
-          gitOwner
         });
 
         // await image.encode({
