@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3001;
 
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://jessshulmanportfolio.com"],
+    origin: ["http://localhost:3000", "http://localhost:3001", "https://jessshulmanportfolio.com"],
     methods: ["POST", "GET", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
   })
@@ -22,11 +22,8 @@ app.options("*", cors());
 
 const upload = multer({ dest: "uploads/" });
 
-const uploadToGitHub = async (image) => {
+const uploadToGitHub = async (image, branch, repo, owner) => {
   const token = process.env.GIT_PAT;
-  const owner = "JosephGoff";
-  const repo = "js-portfolio";
-  const branch = "master";
 
   try {
     if (!image.src || !(image.src instanceof Uint8Array)) {
@@ -34,7 +31,7 @@ const uploadToGitHub = async (image) => {
     }
 
     const response = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/public/assets/${image.currentPath}/${image.name}`,
+      `https://api.github.com/repos/${owner}/${repo}/contents/images/${image.name}`,
       {
         method: "PUT",
         headers: {
@@ -60,7 +57,9 @@ const uploadToGitHub = async (image) => {
 app.post("/compress", upload.array("files"), async (req, res) => {
   try {
     const files = req.files;
-    const currentPath = req.body.currentPath;
+    const gitBranch = req.body.gitBranch
+    const gitRepo = req.body.getRepo
+    const gitOwner = req.body.gitOwner
 
     for (const file of files) {
       const imagePool = new ImagePool(1); // Use a single-threaded ImagePool for safety
@@ -83,7 +82,9 @@ app.post("/compress", upload.array("files"), async (req, res) => {
         await uploadToGitHub({
           name: file.originalname,
           src: processedBuffer,
-          currentPath: currentPath,
+          gitBranch, 
+          gitRepo,
+          gitOwner
         });
 
         // await image.encode({
