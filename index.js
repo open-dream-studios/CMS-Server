@@ -34,7 +34,7 @@ const uploadToGitHub = async (image) => {
     }
 
     const response = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/public/assets/${image.name}`,
+      `https://api.github.com/repos/${owner}/${repo}/contents/images/${image.name}`,
       {
         method: "PUT",
         headers: {
