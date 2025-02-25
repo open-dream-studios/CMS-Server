@@ -7,6 +7,7 @@ const cors = require("cors");
 const fetch = require("node-fetch");
 require("dotenv").config();
 const sharp = require("sharp");
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -67,19 +68,11 @@ app.post("/compress", upload.array("files"), async (req, res) => {
   try {
     const files = req.files;
     for (const file of files) {
-      const imagePool = new ImagePool(1); // Use a single-threaded ImagePool for safety
+      const imagePool = new ImagePool(1);
       try {
-        // const fileBuffer = fs.readFileSync(file.path);
-        // const image = imagePool.ingestImage(fileBuffer);
-
-        // await image.preprocess({
-        //   resize: { width: 1220 },
-        //   rotate: true,
-        // });
-
         const fileBuffer = fs.readFileSync(file.path);
         const processedBuffer = await sharp(fileBuffer)
-          .rotate() // Correct orientation based on EXIF metadata
+          .rotate()
           .resize(1220)
           .webp({ lossless: true })
           .toBuffer();
@@ -88,18 +81,6 @@ app.post("/compress", upload.array("files"), async (req, res) => {
           name: file.originalname,
           src: processedBuffer,
         });
-
-        // await image.encode({
-        //   webp: { lossless: true },
-        // });
-
-        // const { binary } = await image.encodedWith.webp;
-
-        // await uploadToGitHub({
-        //   name: file.originalname,
-        //   src: binary,
-        //   currentPath: currentPath,
-        // });
 
         fs.unlinkSync(file.path);
       } catch (err) {
@@ -121,6 +102,55 @@ app.post("/compress", upload.array("files"), async (req, res) => {
   } catch (error) {
     console.error("Compression error:", error);
     res.status(500).send("Error compressing the image");
+  }
+});
+
+app.post("/edit", upload.array("files"), async (req, res) => {
+  const GIT_KEYS = {
+    owner: "open-dream-studios",
+    repo: "js-portfolio",
+    branch: "main",
+    token: process.env.GIT_PAT,
+  };
+
+  try {
+    const newProjectFile = req.body.appFile;
+    const filePath = "project.json";
+    const fileUrl = `https://api.github.com/repos/${GIT_KEYS.owner}/${GIT_KEYS.repo}/contents/${filePath}`;
+    const headers = {
+      Authorization: `Bearer ${GIT_KEYS.token}`,
+      Accept: "application/vnd.github.v3+json",
+    };
+    const { data: fileInfo } = await axios.get(fileUrl, { headers });
+    const fileSha = fileInfo.sha;
+
+    // Convert the JSON to a UTF-8 encoded Base64 string
+    const updatedContent = btoa(
+      unescape(
+        encodeURIComponent(
+          typeof newProjectFile === "string"
+            ? newProjectFile
+            : JSON.stringify(newProjectFile)
+        )
+      )
+    );
+    const commitMessage = "Update project.json with new content";
+    await axios.put(
+      fileUrl,
+      {
+        message: commitMessage,
+        content: updatedContent,
+        sha: fileSha,
+        branch: GIT_KEYS.branch,
+      },
+      { headers }
+    );
+
+    console.log("Project file updated successfully");
+    res.status(200).send("success");
+  } catch (error) {
+    console.error("Error updating the app file:", error);
+    res.status(500).send("Error updating the app file");
   }
 });
 
