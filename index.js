@@ -18,6 +18,7 @@ app.use(
       "http://localhost:3000",
       "http://localhost:3001",
       "https://jessshulmanportfolio.com",
+      "https://opendreamstudio.com"
     ],
     methods: ["POST", "GET", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
@@ -107,9 +108,9 @@ app.post("/compress", upload.array("files"), async (req, res) => {
 
 app.post("/edit", upload.array("files"), async (req, res) => {
   const GIT_KEYS = {
-    owner: "open-dream-studios",
-    repo: "js-portfolio",
-    branch: "main",
+    owner: req.body.owner,
+    repo: req.body.repo,
+    branch: req.body.branch,
     token: process.env.GIT_PAT,
   };
 
