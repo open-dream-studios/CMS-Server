@@ -109,9 +109,9 @@ app.post("/compress", upload.array("files"), async (req, res) => {
 app.post("/password", upload.none(), async (req, res) => {
   const password = req.body.password;
   if (password === process.env.PASSWORD) {
-    res.status(200);
+    res.status(200).send("Success");
   } else {
-    res.status(401);
+    res.status(401).send("Invalid Password")
   }
 });
 
