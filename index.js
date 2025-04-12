@@ -106,7 +106,7 @@ app.post("/compress", upload.array("files"), async (req, res) => {
   }
 });
 
-app.post("/password", async (req, res) => {
+app.post("/password", upload.none(), async (req, res) => {
   const password = req.body.password;
   if (password === process.env.PASSWORD) {
     res.status(200);
@@ -115,7 +115,7 @@ app.post("/password", async (req, res) => {
   }
 });
 
-app.post("/edit", async (req, res) => {
+app.post("/edit", upload.none(), async (req, res) => {
   const GIT_KEYS = {
     owner: req.body.owner,
     repo: req.body.repo,
