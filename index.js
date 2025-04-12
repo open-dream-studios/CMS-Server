@@ -113,7 +113,7 @@ app.post("/edit", upload.array("files"), async (req, res) => {
     branch: req.body.branch,
     token: process.env.GIT_PAT,
   };
-  const newProjectFile = req.body.appFile;
+  const newProjectFile = JSON.parse(req.body.appFile);
   const filePath = "project.json";
   try {
     const fileUrl = `https://api.github.com/repos/${GIT_KEYS.owner}/${GIT_KEYS.repo}/contents/${filePath}`;
