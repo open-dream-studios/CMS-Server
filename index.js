@@ -7,7 +7,7 @@ const cors = require("cors");
 const fetch = require("node-fetch");
 require("dotenv").config();
 const sharp = require("sharp");
-const axios = require('axios');
+const axios = require("axios");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -18,7 +18,7 @@ app.use(
       "http://localhost:3000",
       "http://localhost:3001",
       "https://jessshulmanportfolio.com",
-      "https://opendreamstudio.com"
+      "https://opendreamstudio.com",
     ],
     methods: ["POST", "GET", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
@@ -113,10 +113,9 @@ app.post("/edit", upload.array("files"), async (req, res) => {
     branch: req.body.branch,
     token: process.env.GIT_PAT,
   };
-
+  const newProjectFile = req.body.appFile;
+  const filePath = "project.json";
   try {
-    const newProjectFile = req.body.appFile;
-    const filePath = "project.json";
     const fileUrl = `https://api.github.com/repos/${GIT_KEYS.owner}/${GIT_KEYS.repo}/contents/${filePath}`;
     const headers = {
       Authorization: `Bearer ${GIT_KEYS.token}`,
